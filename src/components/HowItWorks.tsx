@@ -21,7 +21,7 @@ const steps = [
 
 const HowItWorks: React.FC = () => {
   return (
-    <section className="section bg-gradient-primary">
+    <section id="howItWorks" className="section bg-gradient-primary">
       <div className="container-custom mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}

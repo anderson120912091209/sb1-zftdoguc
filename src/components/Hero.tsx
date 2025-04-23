@@ -1,43 +1,109 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Sparkles, ArrowRight } from 'lucide-react';
+import { Sparkles, ArrowRight, UserPlus } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { useAuth } from '../context/auth';
 
 const Hero: React.FC = () => {
+  const { user, profile } = useAuth();
+  
+  // Check if user is logged in but doesn't have a complete profile
+  const needsOnboarding = user && !profile;
+  
   return (
-    <section className="min-h-screen flex items-center pt-20 overflow-hidden">
+    <section className="min-h-screen flex items-center justify-center pt-20 overflow-hidden">
       <div className="container-custom mx-auto relative">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+        {/* Add the prominent CTA for users who need to complete their profile */}
+        {needsOnboarding && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="mb-8 p-4 rounded-lg border border-cosmic-purple bg-deep-space/80 backdrop-blur-md shadow-lg"
+          >
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="rounded-full bg-cosmic-purple/20 p-2">
+                  <UserPlus className="w-6 h-6 text-cosmic-purple" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-stellar-blue">完成您的資料</h3>
+                  <p className="text-star-white/80">填寫您的信息以找到您的夢幻團隊</p>
+                </div>
+              </div>
+              <Link 
+                to="/onboarding" 
+                className="btn btn-primary whitespace-nowrap"
+              >
+                完成設定
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Link>
+            </div>
+          </motion.div>
+        )}
+        
+        <div className="flex justify-center">
           {/* Text Content */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
-            className="text-center lg:text-left relative z-10"
+            className="text-center max-w-3xl relative z-10"
           >
             <div className="inline-flex items-center px-4 py-2 rounded-full border border-cosmic-purple/30 bg-deep-space/50 backdrop-blur-sm mb-6">
               <Sparkles className="w-4 h-4 text-nova-mint mr-2" />
-              <span className="text-sm">台灣最大的創新者社群平台</span>
+              <span className="text-sm">台灣創新者社群平台</span>
             </div>
             
-            <h1 className="font-bold leading-tight mb-6">
-              <span className="gradient-text">團結 · 創新</span>
-              <br />共創未來
+            <h1 className="font-bold leading-tight mb-6 text-6xl md:text-7xl">
+              <span className="gradient-text">抱團Vibe</span>
             </h1>
             
-            <p className="text-xl md:text-2xl mb-8 text-star-white/80 max-w-xl mx-auto lg:mx-0">
-              抱團Vibe 是你的終極平台：探索黑客松、連結投資人、組建夢幻隊伍
+            <h1 className="gap-5 font-bold text-4xl md:text-4xl mt-4">
+              找項目 • 找團隊 • 找資金
+            </h1>
+            
+            <p className="gap-5 text-xl md:text-1xl mb-8 mt-6 text-star-white/80">
+              有想法，缺人脈?....來抱團，我們幫你找！
             </p>
             
-            <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-              <motion.a 
-                href="#signup"
-                className="btn btn-primary"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                立刻開始
-                <ArrowRight className="w-5 h-5 ml-2" />
-              </motion.a>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              {user ? (
+                needsOnboarding ? (
+                  <motion.div 
+                    className="btn btn-primary"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <Link to="/onboarding" className="flex items-center">
+                      設定您的資料
+                      <ArrowRight className="w-5 h-5 ml-2" />
+                    </Link>
+                  </motion.div>
+                ) : (
+                  <motion.div 
+                    className="btn btn-primary"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <Link to="/teams" className="flex items-center">
+                      探索團隊
+                      <ArrowRight className="w-5 h-5 ml-2" />
+                    </Link>
+                  </motion.div>
+                )
+              ) : (
+                <motion.div 
+                  className="btn btn-primary"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <Link to="/auth/signup" className="flex items-center">
+                    立刻開始
+                    <ArrowRight className="w-5 h-5 ml-2" />
+                  </Link>
+                </motion.div>
+              )}
               <motion.a 
                 href="#explore" 
                 className="btn btn-secondary"
@@ -51,9 +117,9 @@ const Hero: React.FC = () => {
             {/* Stats */}
             <div className="grid grid-cols-3 gap-4 mt-12">
               {[
-                ['1,000+', '活躍用戶'],
-                ['50+', '成功項目'],
-                ['100+', '投資人'],
+                ['0', '活躍用戶'],
+                ['0', '成功項目'],
+                ['0', '投資人'],
               ].map(([number, label], index) => (
                 <motion.div
                   key={index}
@@ -89,48 +155,10 @@ const Hero: React.FC = () => {
               }}
               className="relative"
             >
-              <img 
-                src="https://images.pexels.com/photos/3183150/pexels-photo-3183150.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2" 
-                alt="Team collaboration" 
-                className="rounded-2xl shadow-2xl gradient-border"
-              />
+              
               
               {/* Floating Elements */}
-              <motion.div
-                animate={{ 
-                  y: [0, -15, 0],
-                  x: [0, 10, 0]
-                }}
-                transition={{ 
-                  duration: 4,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                  delay: 1
-                }}
-                className="absolute -top-10 -right-10 glass-card p-4 shadow-glow"
-              >
-                <div className="text-sm">
-                  <span className="text-nova-mint">+500</span> 新用戶加入
-                </div>
-              </motion.div>
-
-              <motion.div
-                animate={{ 
-                  y: [0, 15, 0],
-                  x: [0, -10, 0]
-                }}
-                transition={{ 
-                  duration: 5,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                  delay: 0.5
-                }}
-                className="absolute -bottom-10 -left-10 glass-card p-4 shadow-blue-glow"
-              >
-                <div className="text-sm">
-                  <span className="text-stellar-blue">98%</span> 滿意度
-                </div>
-              </motion.div>
+              
             </motion.div>
           </motion.div>
         </div>

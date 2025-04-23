@@ -1,10 +1,16 @@
 import React, { useState, useEffect } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Menu, X, Code2 } from 'lucide-react';
+import { Menu, X, Code2, User, LogOut, Settings, Map } from 'lucide-react';
+import { useAuth } from '../context/auth';
 
 const Navbar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const { user, profile, signOut } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -20,7 +26,55 @@ const Navbar: React.FC = () => {
     };
   }, [scrolled]);
 
+  useEffect(() => {
+    // Close profile menu when clicking outside
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('.profile-menu-container')) {
+        setShowProfileMenu(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  // Function to handle scrolling to a section
+  const scrollToSection = (sectionId: string) => {
+    // Close mobile menu if open
+    if (isOpen) {
+      setIsOpen(false);
+    }
+    
+    // If we're on the homepage, scroll to the section
+    if (location.pathname === '/') {
+      const element = document.getElementById(sectionId);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+      }
+    } else {
+      // If we're on a different page, navigate to the homepage with the section hash
+      navigate('/', { state: { scrollToSection: sectionId } });
+    }
+  };
+
+  // Check for scrollToSection in location state when coming from another page
+  useEffect(() => {
+    if (location.state && (location.state as any).scrollToSection) {
+      const sectionId = (location.state as any).scrollToSection;
+      setTimeout(() => {
+        const element = document.getElementById(sectionId);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 500); // Small delay to ensure the page has loaded
+    }
+  }, [location.state]);
+
   const toggleMenu = () => setIsOpen(!isOpen);
+  const toggleProfileMenu = () => setShowProfileMenu(!showProfileMenu);
 
   return (
     <motion.nav
@@ -35,37 +89,96 @@ const Navbar: React.FC = () => {
         <div className="flex items-center justify-between">
           {/* Logo */}
           <div className="flex items-center space-x-2">
-            <Code2 className="w-8 h-8 text-neon-mint" />
-            <span className="text-xl font-bold">抱團Vibe</span>
+            <Link to="/">
+              <Code2 className="w-8 h-8 text-neon-mint" />
+            </Link>
+            <Link to="/" className="text-xl font-bold">抱團Vibe</Link>
           </div>
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
-            <a href="#hackathons" className="hover:text-neon-mint transition-colors">
-              Hackathons
-            </a>
-            <a href="#investors" className="hover:text-neon-mint transition-colors">
-              Investors
-            </a>
-            <a href="#teams" className="hover:text-neon-mint transition-colors">
-              Teams
-            </a>
-            <a href="#pricing" className="hover:text-neon-mint transition-colors">
-              Pricing
-            </a>
-            <a href="#docs" className="hover:text-neon-mint transition-colors">
-              Docs
-            </a>
+            <button 
+              onClick={() => scrollToSection('hackathons')} 
+              className="hover:text-neon-mint transition-colors"
+            >
+              活動 Events
+            </button>
+            <Link 
+              to="/taiwan-map" 
+              className="hover:text-neon-mint transition-colors flex items-center"
+            >
+              <Map className="w-4 h-4 mr-1" />
+              地圖 Map
+            </Link>
+            <button 
+              onClick={() => scrollToSection('matchmaking')} 
+              className="hover:text-neon-mint transition-colors"
+            >
+              找隊友 Matchmaking
+            </button>
+            <button 
+              onClick={() => scrollToSection('docs')} 
+              className="hover:text-neon-mint transition-colors"
+            >
+              資源 Resources
+            </button>
           </div>
 
           {/* CTA Buttons */}
           <div className="hidden md:flex items-center space-x-4">
-            <a href="#login" className="hover:text-neon-mint transition-colors">
-              Log In
-            </a>
-            <a href="#signup" className="btn btn-primary">
-              Get Started
-            </a>
+            {user ? (
+              <div className="relative profile-menu-container">
+                <button 
+                  onClick={toggleProfileMenu}
+                  className="flex items-center space-x-2 hover:text-neon-mint transition-colors"
+                >
+                  <span>{profile?.display_name || user.email?.split('@')[0]}</span>
+                  {profile?.avatar_url ? (
+                    <img 
+                      src={profile.avatar_url} 
+                      alt="Avatar" 
+                      className="w-8 h-8 rounded-full"
+                    />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-cosmic-purple/30 flex items-center justify-center">
+                      <User className="w-4 h-4" />
+                    </div>
+                  )}
+                </button>
+                
+                {showProfileMenu && (
+                  <div className="absolute right-0 mt-2 w-48 bg-dark-blue/95 backdrop-blur-lg shadow-lg rounded-md py-1 z-50">
+                    <Link 
+                      to="/profile" 
+                      className="flex items-center px-4 py-2 hover:bg-cosmic-purple/20"
+                      onClick={() => setShowProfileMenu(false)}
+                    >
+                      <Settings className="w-4 h-4 mr-2" />
+                      <span>Edit Profile</span>
+                    </Link>
+                    <button 
+                      onClick={() => {
+                        signOut();
+                        setShowProfileMenu(false);
+                      }}
+                      className="flex items-center w-full text-left px-4 py-2 hover:bg-cosmic-purple/20"
+                    >
+                      <LogOut className="w-4 h-4 mr-2" />
+                      <span>Sign Out</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <>
+                <Link to="/auth/login" className="hover:text-neon-mint transition-colors">
+                  Log In
+                </Link>
+                <Link to="/auth/signup" className="btn btn-primary">
+                  Get Started
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -90,28 +203,60 @@ const Navbar: React.FC = () => {
           transition={{ duration: 0.3 }}
         >
           <div className="container mx-auto py-4 px-4 flex flex-col space-y-4">
-            <a href="#hackathons" className="py-2 hover:text-neon-mint" onClick={toggleMenu}>
-              Hackathons
-            </a>
-            <a href="#investors" className="py-2 hover:text-neon-mint" onClick={toggleMenu}>
-              Investors
-            </a>
-            <a href="#teams" className="py-2 hover:text-neon-mint" onClick={toggleMenu}>
-              Teams
-            </a>
-            <a href="#pricing" className="py-2 hover:text-neon-mint" onClick={toggleMenu}>
-              Pricing
-            </a>
-            <a href="#docs" className="py-2 hover:text-neon-mint" onClick={toggleMenu}>
+            <button 
+              onClick={() => scrollToSection('hackathons')} 
+              className="py-2 text-left hover:text-neon-mint"
+            >
+              活動 Events
+            </button>
+            <Link 
+              to="/taiwan-map" 
+              className="py-2 text-left hover:text-neon-mint flex items-center"
+              onClick={toggleMenu}
+            >
+              <Map className="w-4 h-4 mr-1" />
+              地圖 Map
+            </Link>
+            <button 
+              onClick={() => scrollToSection('matchmaking')} 
+              className="py-2 text-left hover:text-neon-mint"
+            >
+              找隊友 Matchmaking
+            </button>
+            <button 
+              onClick={() => scrollToSection('docs')} 
+              className="py-2 text-left hover:text-neon-mint"
+            >
               Docs
-            </a>
+            </button>
             <div className="pt-4 flex flex-col space-y-3">
-              <a href="#login" className="py-2 text-center hover:text-neon-mint" onClick={toggleMenu}>
-                Log In
-              </a>
-              <a href="#signup" className="btn btn-primary" onClick={toggleMenu}>
-                Get Started
-              </a>
+              {user ? (
+                <>
+                  <Link to="/profile" className="py-2 text-center hover:text-neon-mint" onClick={toggleMenu}>
+                    <Settings className="w-4 h-4 mr-2 inline-block" />
+                    <span>Edit Profile</span>
+                  </Link>
+                  <button 
+                    onClick={() => {
+                      signOut();
+                      toggleMenu();
+                    }}
+                    className="py-2 text-center hover:text-neon-mint w-full"
+                  >
+                    <LogOut className="w-4 h-4 mr-2 inline-block" />
+                    <span>Sign Out</span>
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link to="/auth/login" className="py-2 text-center hover:text-neon-mint" onClick={toggleMenu}>
+                    Log In
+                  </Link>
+                  <Link to="/auth/signup" className="btn btn-primary" onClick={toggleMenu}>
+                    Get Started
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </motion.div>
